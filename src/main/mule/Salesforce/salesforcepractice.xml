@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:batch="http://www.mulesoft.org/schema/mule/batch" xmlns:salesforce="http://www.mulesoft.org/schema/mule/salesforce"
+	xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core"
+	xmlns:db="http://www.mulesoft.org/schema/mule/db" xmlns:http="http://www.mulesoft.org/schema/mule/http" xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd
+http://www.mulesoft.org/schema/mule/db http://www.mulesoft.org/schema/mule/db/current/mule-db.xsd
+http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd
+http://www.mulesoft.org/schema/mule/salesforce http://www.mulesoft.org/schema/mule/salesforce/current/mule-salesforce.xsd
+http://www.mulesoft.org/schema/mule/batch http://www.mulesoft.org/schema/mule/batch/current/mule-batch.xsd">
+	<db:config name="Database_Config" doc:name="Database Config" doc:id="dc63da80-e1b7-4b2a-a402-9f9575bc085f" >
+		<db:my-sql-connection host="congo.c3w6upfzlwwe.us-west-1.rds.amazonaws.com" port="3306" user="mulesoft" password="mulesoft" database="congo" />
+	</db:config>
+	<salesforce:sfdc-config name="Salesforce_Config" doc:name="Salesforce Config" doc:id="73681bb3-a60d-4714-b993-5b1cb66dbb38" >
+		<salesforce:basic-connection username="tokhushisrivastava@gmail.com" password="Khushi123#" securityToken="FiQ3FCmTlAuP0aM2YDB9vVL0U" url="https://login.salesforce.com/services/Soap/u/56.0" >
+			<reconnection >
+				<reconnect />
+			</reconnection>
+		</salesforce:basic-connection>
+	</salesforce:sfdc-config>
+	<flow name="salesforcepracticeFlow" doc:id="688618e6-1a8d-40c4-9351-95a49d743831" >
+		<http:listener doc:name="Listener" doc:id="3f590e68-cbf6-469f-8080-990dfa9b9fbc" config-ref="HTTP_Listener_config" path="/salesforce/SFP" allowedMethods="GET"/>
+		<logger level="INFO" doc:name="Logger" doc:id="63253dfe-4597-44f0-ad44-33ef5cc9b898" message="request send" />
+		<db:select doc:name="Select" doc:id="4d4913fb-b544-4ce8-950a-059628ef7e89" config-ref="Database_Config">
+			<db:sql ><![CDATA[SELECT * from contacts;]]></db:sql>
+		</db:select>
+		<logger level="INFO" doc:name="Logger" doc:id="912823b9-66ba-4bcf-95d5-c7af07f4b67d" message="data rcvd"/>
+		<ee:transform doc:name="Transform Message" doc:id="319aeda4-0829-4256-9210-559b794d6712" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+
+payload map(item, index) ->
+{
+FirstName: item.FirstName,
+LastName: item.LastName,
+Email: item.Email,
+Company: item.Company
+}
+]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+		<logger level="INFO" doc:name="Logger" doc:id="b4614d2a-5143-4c58-9a98-7aa7192f5415" />
+		<batch:job jobName="salesforcepracticeBatch_Job" doc:id="18bcb3d6-b250-4f9c-a05a-14e548999196" blockSize="10">
+			<batch:process-records >
+				<batch:step name="Batch_Step1" doc:id="afdbf6cc-0d7e-45dc-976e-48395f0fac50" >
+					<salesforce:create type="Lead" doc:name="Create" doc:id="b8f28700-ac6f-495b-bc9d-ff684bb45d05" config-ref="Salesforce_Config"/>
+				</batch:step>
+			</batch:process-records>
+			<batch:on-complete >
+				<logger level="INFO" doc:name="Logger" doc:id="7e4326bf-cec4-4ae6-9cc0-cd1f60dcd2cb" message="completed"/>
+			</batch:on-complete>
+		</batch:job>
+	</flow>
+</mule>

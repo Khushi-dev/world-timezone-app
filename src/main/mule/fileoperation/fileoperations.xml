@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:db="http://www.mulesoft.org/schema/mule/db" xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core"
+	xmlns:file="http://www.mulesoft.org/schema/mule/file"
+	xmlns:http="http://www.mulesoft.org/schema/mule/http" xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd
+http://www.mulesoft.org/schema/mule/file http://www.mulesoft.org/schema/mule/file/current/mule-file.xsd
+http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd
+http://www.mulesoft.org/schema/mule/db http://www.mulesoft.org/schema/mule/db/current/mule-db.xsd">
+	<flow name="readStudentRecords" doc:id="5c10fd13-6c07-41be-b1a5-4c13018dd41c" >
+		<http:listener doc:name="Listener" doc:id="d4eae46c-85a0-4476-8d01-c02076dbd6c8" path="/file/getStudentsRecord" allowedMethods="GET" config-ref="HTTP_Listener_config"/>
+		<logger level="INFO" doc:name="Logger" doc:id="484a0e98-b5bb-49d2-a24d-5d4ef6ed6523" />
+		<file:read doc:name="Read" doc:id="d9caad5d-12e1-407a-824e-97a14bd513cc" path="C:\My_Work\input\Record\student.csv" config-ref="File_Config_g"/>
+		<ee:transform doc:name="Transform Message" doc:id="360b203a-88db-4a51-89d2-88fd4c94de26" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+payload
+	
+]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+	</flow>
+	<flow name="createStuentRecord" doc:id="a568e7d5-5e7a-4def-b192-f24591d02339">
+		<http:listener doc:name="Listener" doc:id="1ce6e195-d565-4536-a3e1-b7400f179d6f" path="/file/createStudentsRecord" allowedMethods="POST" config-ref="HTTP_Listener_config"/>
+		<logger level="INFO" doc:name="Logger" doc:id="98e1dd9e-5dcd-48dc-9e6a-3701fd121cfb" message="#[payload]" />
+		<file:write doc:name="Write" doc:id="971cd962-787a-44c8-af9a-06ec8e4f6a29" path="C:\My_Work\input\RECORD\student.csv" mode="APPEND">
+			<file:content><![CDATA[#[%dw 2.0
+output application/csv
+  ---
+[{
+	"NAME": attributes.queryParams.name as String,
+	"MARKS": attributes.queryParams.marks as String
+	
+}]]]]></file:content>
+		</file:write>
+		<logger level="INFO" doc:name="Logger" doc:id="f055ec95-e29b-499a-b9f4-d770f7dab514" message="data entered" />
+	</flow>
+</mule>

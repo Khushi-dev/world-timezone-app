@@ -1,0 +1,84 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core" xmlns:salesforce="http://www.mulesoft.org/schema/mule/salesforce"
+	xmlns:http="http://www.mulesoft.org/schema/mule/http"
+	xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd
+http://www.mulesoft.org/schema/mule/salesforce http://www.mulesoft.org/schema/mule/salesforce/current/mule-salesforce.xsd
+http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd">
+	<flow name="sf_add_account" doc:id="65b1a3b0-867b-489a-8479-f2926d1bbf06" >
+		<http:listener doc:name="Listener" doc:id="7ab9e8c5-5b4a-476c-973d-bdd83ec4f851" config-ref="HTTP_Listener_config" path="/salesforce/addacc" allowedMethods="POST"/>
+		<logger level="WARN" doc:name="Logger" doc:id="8f9a17b2-86a7-4510-b5ed-a67131491ffc" message="req recieved"/>
+		<ee:transform doc:name="Transform Message" doc:id="4101903b-0dfa-4074-93a3-38cf40465023" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+payload map (item,index)->
+
+{
+"Name" : item.name,
+"BillingStreet" : item.billingAddress,
+"BillingCity" : item.billingCity,
+"BillingCountry" : item.billingContry,
+"BillingPostalCode": item.billingPostalCode,
+"BillingState" : item.billingState			
+}
+
+]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+		<logger level="INFO" doc:name="Logger" doc:id="acf1ca6a-e2e8-40ff-8098-5c5d261f5817" message="data pushed"/>
+		<salesforce:create doc:name="Create" doc:id="59e6bbcf-8d4a-4df3-89e8-e9dfeb71eaf0" config-ref="Salesforce_Config" type="Account"/>
+		<logger level="INFO" doc:name="Logger" doc:id="a3647ffc-030a-4a65-937e-5d1b054ddea7" message="data  enetered "/>
+		<ee:transform doc:name="Transform Message" doc:id="cf5a3a5e-da7f-4ebb-8f64-035489af1c28" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+payload
+]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+	</flow>
+	<flow name="sf_account_fetch" doc:id="fe9fb480-185b-4c82-8e3e-4176859bd621" >
+		<http:listener doc:name="Listener" doc:id="dcb83f47-66b5-4272-bdf0-5dfc7f3de375" config-ref="HTTP_Listener_config" path="/salesforce/fetchacc" allowedMethods="GET"/>
+		<logger level="INFO" doc:name="Logger" doc:id="12c049e1-4e40-474b-880e-caf60908f57c" message="request sends"/>
+		<set-variable value="#[attributes.queryParams.billingCity default '']" doc:name="Set Variable" doc:id="f4345be7-1744-457d-ae6f-0e5e9095181a" variableName="billingCityVar"/>
+		<choice doc:name="Choice" doc:id="4c655556-f7ca-4563-9e98-333fffd617df" >
+			<when expression="#[vars.billingCityVar !='']">
+				<salesforce:query doc:name="Query" doc:id="f7f8a9dc-59a0-4797-b05a-ce4675d220cc" config-ref="Salesforce_Config">
+					<salesforce:salesforce-query ><![CDATA[Select Name,BillingCountry,BillingCity,BillingState,BillingPostalCode,BillingStreet from Account where BillingCity=':billingCity' ]]></salesforce:salesforce-query>
+					<salesforce:parameters ><![CDATA[#[output application/java
+---
+{
+	billingCity : vars.billingCityVar
+}]]]></salesforce:parameters>
+				</salesforce:query>
+			</when>
+			<otherwise >
+				<salesforce:query-all doc:name="Query all" doc:id="8fe9ae0c-26a5-4e2f-886d-1e71c7418127" config-ref="Salesforce_Config">
+			<salesforce:salesforce-query><![CDATA[Select Name,BillingCountry,BillingCity,BillingState,BillingPostalCode,BillingStreet from Account]]></salesforce:salesforce-query>
+		</salesforce:query-all>
+			</otherwise>
+		</choice>
+		<ee:transform doc:name="Transform Message" doc:id="28287e34-e437-4e90-8a29-c47fae19d0b2">
+			<ee:message>
+				<ee:set-payload><![CDATA[
+	%dw 2.0
+output application/json
+---
+payload map (item, index) -> {
+    
+
+Name: item.Name,
+BillingCity : item.BillingCity
+
+
+
+
+}]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+	</flow>
+</mule>

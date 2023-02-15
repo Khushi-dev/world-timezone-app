@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:http="http://www.mulesoft.org/schema/mule/http" xmlns="http://www.mulesoft.org/schema/mule/core"
+	xmlns:doc="http://www.mulesoft.org/schema/mule/documentation"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd">
+	<flow name="routingFlow" doc:id="2dc17ea2-4772-4b12-b803-619b0891c32c" >
+		<http:listener doc:name="Listener" doc:id="4af21aae-f49e-476e-bd03-c4d1eab93678" config-ref="HTTP_Listener_config" path="/test" allowedMethods="POST"/>
+		<choice doc:name="Choice" doc:id="04292ad3-0727-4c08-8b65-fd41d6c59696">
+			<when expression='#[payload."color" == "red"]'>
+				<logger level="INFO" doc:name="Logger" doc:id="2bc5d4ec-480f-4348-a2f9-0687dea4d57c" message="#['color is red']"/>
+			</when>
+			<when expression='#[payload."color" == "yellow"]'>
+				<logger level="INFO" doc:name="Logger" doc:id="ae8e6c68-0eac-476e-acd7-158ed5af504d" message="#['color is yellow']"/>
+			</when>
+			<otherwise >
+				<logger level="INFO" doc:name="Logger" doc:id="d554881d-7ed0-44d4-a914-9ca8d349dc17" message="#['color is other than choice']"/>
+			</otherwise>
+		</choice>
+	</flow>
+</mule>

@@ -1,0 +1,70 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:file="http://www.mulesoft.org/schema/mule/file" xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core"
+	xmlns:db="http://www.mulesoft.org/schema/mule/db"
+	xmlns:http="http://www.mulesoft.org/schema/mule/http" xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd
+http://www.mulesoft.org/schema/mule/db http://www.mulesoft.org/schema/mule/db/current/mule-db.xsd
+http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd
+http://www.mulesoft.org/schema/mule/file http://www.mulesoft.org/schema/mule/file/current/mule-file.xsd">
+	<db:config name="Database_Config_products" doc:name="Database Config" doc:id="1c6017c5-3d93-40eb-8cdc-b48d2a17006c" >
+		<db:my-sql-connection host="localhost" port="3306" user="root" password="Khushi123#" database="muletrainingdb" />
+	</db:config>
+	<db:config name="Database_Config1" doc:name="Database Config" doc:id="0ab37f61-72e1-47bd-beeb-3a107f0a8518" >
+		<db:my-sql-connection host="localhost" port="3306" user="root" password="Khushi123#" database="record" />
+	</db:config>
+	<flow name="scatter_gather" doc:id="111c0127-12ac-49b3-8332-7ed62e0e61bc" >
+		<http:listener doc:name="Listener" doc:id="8c042e74-d5ac-4e19-8e76-6833edb14f20" path="/database/all" config-ref="HTTP_Listener_config"/>
+		<logger level="INFO" doc:name="Logger" doc:id="a69f2b34-fa32-4b93-9bc0-bd2a7cbb6467" />
+		<scatter-gather doc:name="Scatter-Gather" doc:id="a9520d88-d150-4a3b-9455-51593e463bdb" >
+			<route >
+				<flow-ref doc:name="databaseendpoinflowFlow" doc:id="b551e034-ea3e-4f8d-9506-c1c46d3fadc6" name="databaseendpoinflowFlow"/>
+			</route>
+			<route >
+				<flow-ref doc:name="dbpracticeflow" doc:id="9ea47b15-df7e-4ebf-b30b-bc0d4aa58e9e" name="dbpracticeflow"/>
+			</route>
+		</scatter-gather>
+		<ee:transform doc:name="Transform Message" doc:id="6e84039a-5c6a-4ff5-a0c3-f0d1110ebc40">
+			<ee:message>
+				<ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+[
+	flatten((payload..payload default []))
+	
+]]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+	</flow>
+	<flow name="databaseendpoinflowFlow" doc:id="2f7f0711-5088-4c05-a79d-ac3bcf6166a8" >
+		<http:listener doc:name="Listener" doc:id="344c6528-f801-4ad6-868b-5adc86373071" path="/database/products" config-ref="HTTP_Listener_config"/>
+		<logger level="INFO" doc:name="Logger" doc:id="a1fcb1bb-bf65-4e82-a876-e66b89cfe525" message="requestrecieved"/>
+		<db:select doc:name="Select" doc:id="7ddf325b-9baa-4da8-973d-83440d03e98a" config-ref="Database_Config_products">
+			<db:sql ><![CDATA[SELECT * FROM muletrainingdb.product ]]></db:sql>
+		</db:select>
+		<ee:transform doc:name="Transform Message" doc:id="a937adeb-93d7-43d6-b310-c88d1bb6a4af">
+			<ee:message>
+				<ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+payload]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+	</flow>
+	<flow name="dbpracticeflow" doc:id="c9f49e81-418e-4265-ad95-fcd24ed66ded" >
+		<http:listener doc:name="Listener" doc:id="1a584eb6-0a9b-415c-a7a8-1aec1cef5372" path="/database/students" config-ref="HTTP_Listener_config"/>
+		<logger level="INFO" doc:name="Logger" doc:id="6380c8a3-3a2e-46f5-8e53-caa8d925ef80" />
+		<db:select doc:name="Select" doc:id="deda759a-4e53-4f6f-b970-7e3e3f45a323" config-ref="Database_Config_products">
+			<db:sql ><![CDATA[SELECT * FROM record.user_details]]></db:sql>
+		</db:select>
+		<ee:transform doc:name="Transform Message" doc:id="1d8f780e-113c-4563-93ac-6006b7c88adb" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+payload
+]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+	</flow>
+</mule>

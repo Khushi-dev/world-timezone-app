@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:http="http://www.mulesoft.org/schema/mule/http" xmlns="http://www.mulesoft.org/schema/mule/core"
+	xmlns:doc="http://www.mulesoft.org/schema/mule/documentation"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd">
+	<flow name="firstsuccessfulrouterFlow" doc:id="f71300fe-52a1-463c-b969-ae74841b49b9" >
+		<http:listener doc:name="Listener" doc:id="5708b07e-7e00-410b-ace8-d3c41a3ba941" config-ref="HTTP_Listener_config" path="/fsrtest" allowedMethods="GET"/>
+		<first-successful doc:name="First Successful" doc:id="4bc2913a-194b-43f4-b43e-d98d7b5a3951" >
+			<route >
+				<logger level="INFO" doc:name="Logger" doc:id="a02b4429-507d-4c0c-9e7b-3269808c99ba" message="#['primary']"/>
+				<http:request method="GET" doc:name="Request" doc:id="bbf55010-2c3c-403d-b911-b7f92e8c335d" url="http://localhost:8081/mule4/primary1"/>
+			</route>
+			<route >
+				<logger level="INFO" doc:name="Logger" doc:id="15fda511-6ebf-4298-a672-ae6ede3c390a" message="#['secondary']"/>
+				<http:request method="GET" doc:name="Request" doc:id="04be38d3-2778-47d1-81ba-cc4acca09c03" url="http://localhost:8081/mule4/secondary"/>
+			</route>
+		</first-successful>
+	</flow>
+	<flow name="firstsuccessfulrouterFlow1" doc:id="9effc89c-879a-4366-aaff-8d64b8d62229" >
+		<http:listener doc:name="Listener" doc:id="fa9663d7-4083-4c57-83ef-ca3cd02e55bc" config-ref="HTTP_Listener_config" path="/primary"/>
+		<set-payload value="#['primary success']" doc:name="Set Payload" doc:id="cc58b63b-f91d-40de-9d4a-41b26287ccdf" />
+	</flow>
+	<flow name="firstsuccessfulrouterFlow2" doc:id="f4140b94-7e3a-4fd7-aede-8b50f7c5003e" >
+		<http:listener doc:name="Listener" doc:id="ae031c4f-3022-45f6-8777-a984432762c0" config-ref="HTTP_Listener_config" path="/secondary"/>
+		<set-payload value="#['secondary success']" doc:name="Set Payload" doc:id="54965a40-419c-48f6-86aa-96774eb60051" />
+	</flow>
+</mule>
